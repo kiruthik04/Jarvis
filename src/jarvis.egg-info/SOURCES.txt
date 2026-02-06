@@ -1,0 +1,16 @@
+README.md
+setup.py
+src/actions/__init__.py
+src/actions/browser.py
+src/actions/gui.py
+src/actions/scraper.py
+src/actions/system_ops.py
+src/brain/__init__.py
+src/brain/classifier.py
+src/brain/llm.py
+src/brain/prompts.py
+src/jarvis.egg-info/PKG-INFO
+src/jarvis.egg-info/SOURCES.txt
+src/jarvis.egg-info/dependency_links.txt
+src/jarvis.egg-info/requires.txt
+src/jarvis.egg-info/top_level.txt

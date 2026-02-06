@@ -15,7 +15,7 @@
 
 ---
 
-## 🚀 Overview
+## 🚀 __Overview__
 
 **J.A.R.V.I.S.** is a modular, AI-powered personal assistant designed to automate tasks, answer complex queries, and interact via a futuristic Graphical User Interface (GUI). Unlike traditional chatbots, Jarvis mimics a human thought process using a **"Two-Stage Brain"** architecture.
 

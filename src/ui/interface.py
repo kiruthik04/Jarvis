@@ -206,8 +206,8 @@ class JarvisUI(ctk.CTk):
                 intent = classification.get("intent")
                 params = classification.get("parameters", {})
                 self.log_to_chat("System", f"Executing protocol: {intent}")
-                SystemOps.execute_intent(intent, params)
-                self.log_to_chat("Jarvis", "Execution complete.")
+                result_message = SystemOps.execute_intent(intent, params)
+                self.log_to_chat("Jarvis", result_message)
 
             elif task_type == "WEB_SEARCH":
                 query = classification.get("query")

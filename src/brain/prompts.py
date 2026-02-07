@@ -44,9 +44,13 @@ Confidence:
 
 If Task Type = SYSTEM_ACTION:
 Intent:
-<short action name>
+<One of: open_application | volume_up | volume_down | volume_mute | change_wifi_network | show_wifi_networks | take_screenshot>
 Parameters:
 - <key>: <value>
+
+Supported Parameters:
+- open_application: app_name
+- change_wifi_network: network_name
 
 If Task Type = WEB_SEARCH:
 Search Query:

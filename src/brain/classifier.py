@@ -35,9 +35,23 @@ class TaskClassifier:
         parsed = {}
         
         # Extract Task Type
-        task_type_match = re.search(r"Task Type:\s*(SYSTEM_ACTION|WEB_SEARCH|THINK_AND_ANSWER)", text, re.IGNORECASE)
+        # Extract Task Type
+        # Updated regex to be more flexible and catch if LLM hallucinates the intent as the type
+        task_type_match = re.search(r"Task Type:\s*([A-Z_]+)", text, re.IGNORECASE)
         if task_type_match:
-            parsed["task_type"] = task_type_match.group(1).upper()
+            extracted_type = task_type_match.group(1).upper()
+            
+            # Map known intents to SYSTEM_ACTION if LLM forgets the wrapper
+            system_intents = ["SHOW_WIFI_NETWORKS", "CHANGE_WIFI_NETWORK", "OPEN_APPLICATION", "VOLUME_UP", "VOLUME_DOWN", "VOLUME_MUTE", "TAKE_SCREENSHOT"]
+            
+            if extracted_type in ["SYSTEM_ACTION", "WEB_SEARCH", "THINK_AND_ANSWER"]:
+                parsed["task_type"] = extracted_type
+            elif extracted_type in system_intents:
+                # Fallback: Treat as SYSTEM_ACTION
+                parsed["task_type"] = "SYSTEM_ACTION"
+                parsed["intent"] = extracted_type.lower() # Auto-populate intent
+            else:
+                parsed["task_type"] = "UNKNOWN"
         else:
             parsed["task_type"] = "UNKNOWN"
 
@@ -48,14 +62,17 @@ class TaskClassifier:
         
         # Extract intent and parameters for SYSTEM_ACTION
         if parsed["task_type"] == "SYSTEM_ACTION":
-            intent_match = re.search(r"Intent:\s*(.+)", text)
-            if intent_match:
-                parsed["intent"] = intent_match.group(1).strip()
+            # Only look for intent if not already set by fallback
+            if "intent" not in parsed:
+                intent_match = re.search(r"Intent:\s*(.+)", text)
+                if intent_match:
+                    parsed["intent"] = intent_match.group(1).strip()
             
             params = {}
             param_matches = re.finditer(r"-\s*(.+?):\s*(.+)", text)
             for match in param_matches:
                 params[match.group(1).strip()] = match.group(2).strip()
+            parsed["parameters"] = params
             parsed["parameters"] = params
 
         # Extract search query for WEB_SEARCH

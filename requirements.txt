@@ -8,3 +8,12 @@ requests
 customtkinter
 pillow
 pyttsx3
+
+python-docx
+python-pptx
+SpeechRecognition
+pyaudio
+psutil
+schedule
+beautifulsoup4
+requests

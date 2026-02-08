@@ -35,8 +35,6 @@ class TaskClassifier:
         parsed = {}
         
         # Extract Task Type
-        # Extract Task Type
-        # Updated regex to be more flexible and catch if LLM hallucinates the intent as the type
         task_type_match = re.search(r"Task Type:\s*([A-Z_]+)", text, re.IGNORECASE)
         if task_type_match:
             extracted_type = task_type_match.group(1).upper()
@@ -44,12 +42,24 @@ class TaskClassifier:
             # Map known intents to SYSTEM_ACTION if LLM forgets the wrapper
             system_intents = ["SHOW_WIFI_NETWORKS", "CHANGE_WIFI_NETWORK", "OPEN_APPLICATION", "VOLUME_UP", "VOLUME_DOWN", "VOLUME_MUTE", "TAKE_SCREENSHOT"]
             
-            if extracted_type in ["SYSTEM_ACTION", "WEB_SEARCH", "THINK_AND_ANSWER"]:
+            # Whitelist valid task types
+            valid_types = [
+                "SYSTEM_ACTION", 
+                "WEB_SEARCH", 
+                "THINK_AND_ANSWER", 
+                "OFFICE_ACTION", 
+                "MEETING_MODE", 
+                "GENERAL_TASK",
+                "MEMORY_ACTION",
+                "AUTOMATION_ACTION"
+            ]
+            
+            if extracted_type in valid_types:
                 parsed["task_type"] = extracted_type
             elif extracted_type in system_intents:
                 # Fallback: Treat as SYSTEM_ACTION
                 parsed["task_type"] = "SYSTEM_ACTION"
-                parsed["intent"] = extracted_type.lower() # Auto-populate intent
+                parsed["intent"] = extracted_type.lower()
             else:
                 parsed["task_type"] = "UNKNOWN"
         else:
@@ -60,28 +70,55 @@ class TaskClassifier:
         if confidence_match:
             parsed["confidence"] = float(confidence_match.group(1))
         
-        # Extract intent and parameters for SYSTEM_ACTION
-        if parsed["task_type"] == "SYSTEM_ACTION":
-            # Only look for intent if not already set by fallback
+        # --- PARSING PER TASK TYPE ---
+
+        # 1. SYSTEM_ACTION & OFFICE_ACTION & AUTOMATION_ACTION (Shared structure: Intent + Parameters)
+        if parsed["task_type"] in ["SYSTEM_ACTION", "OFFICE_ACTION", "AUTOMATION_ACTION"]:
+            # Extract Intent
             if "intent" not in parsed:
                 intent_match = re.search(r"Intent:\s*(.+)", text)
                 if intent_match:
                     parsed["intent"] = intent_match.group(1).strip()
             
+            # Extract Parameters
             params = {}
             param_matches = re.finditer(r"-\s*(.+?):\s*(.+)", text)
             for match in param_matches:
                 params[match.group(1).strip()] = match.group(2).strip()
             parsed["parameters"] = params
-            parsed["parameters"] = params
 
-        # Extract search query for WEB_SEARCH
+        # 2. MEETING_MODE (Intent only)
+        elif parsed["task_type"] == "MEETING_MODE":
+             intent_match = re.search(r"Intent:\s*(.+)", text)
+             if intent_match:
+                parsed["intent"] = intent_match.group(1).strip()
+
+        # 3. MEMORY_ACTION
+        elif parsed["task_type"] == "MEMORY_ACTION":
+             intent_match = re.search(r"Intent:\s*(.+)", text)
+             if intent_match:
+                parsed["intent"] = intent_match.group(1).strip()
+             
+             # Extract Parameters (key/value)
+             params = {}
+             param_matches = re.finditer(r"-\s*(.+?):\s*(.+)", text)
+             for match in param_matches:
+                 params[match.group(1).strip()] = match.group(2).strip()
+             parsed["parameters"] = params
+
+        # 4. GENERAL_TASK (Goal)
+        elif parsed["task_type"] == "GENERAL_TASK":
+            goal_match = re.search(r"Goal:\s*(.+)", text, re.DOTALL)
+            if goal_match:
+                parsed["goal"] = goal_match.group(1).strip()
+
+        # 5. WEB_SEARCH (Query)
         elif parsed["task_type"] == "WEB_SEARCH":
             query_match = re.search(r"Search Query:\s*(.+)", text)
             if query_match:
                 parsed["query"] = query_match.group(1).strip()
 
-        # Extract answer for THINK_AND_ANSWER
+        # 6. THINK_AND_ANSWER (Answer)
         elif parsed["task_type"] == "THINK_AND_ANSWER":
             # Answer is everything after "Answer:"
             answer_match = re.search(r"Answer:\s*(.+)", text, re.DOTALL)
@@ -89,4 +126,5 @@ class TaskClassifier:
                 parsed["answer"] = answer_match.group(1).strip()
 
         parsed["raw_output"] = text
+        print(f"[DEBUG] Parsed classification: {parsed}")
         return parsed

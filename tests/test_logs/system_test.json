@@ -1,0 +1,10 @@
+[
+    {
+        "timestamp": "2026-02-08T23:00:12.738349",
+        "user_input": "Test",
+        "classification": {},
+        "action": "TEST",
+        "response": "Response",
+        "latency_ms": 100.0
+    }
+]

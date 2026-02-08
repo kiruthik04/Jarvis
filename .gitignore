@@ -6,3 +6,25 @@ venv/
 .DS_Store
 vscode/
 .idea/
+
+# Local Data
+logs/
+browser_profile/
+jarvis_memory.db
+
+# Test Outputs
+test_output*.txt
+test_results*.txt
+
+# Temporary Scripts
+read_log.py
+check_system.py
+
+# Generated Documents
+generated_docs/
+*.docx
+*.doc
+
+# Temp Text Files (But keep requirements.txt)
+*.txt
+!requirements.txt

@@ -11,6 +11,7 @@ vscode/
 logs/
 browser_profile/
 jarvis_memory.db
+test_memory.db
 
 # Test Outputs
 test_output*.txt
@@ -28,3 +29,9 @@ generated_docs/
 # Temp Text Files (But keep requirements.txt)
 *.txt
 !requirements.txt
+tests/
+*_test.py
+test_*.py
+debug_voice.py
+find_working_mic.py
+temp_speech.mp3

@@ -4,14 +4,16 @@ from src.brain.classifier import TaskClassifier
 from src.brain.llm import ReasoningBrain
 from src.actions.system_ops import SystemOps
 from src.actions.browser import BrowserManager
-from src.actions.voice import VoiceEngine
+from src.actions.voice_manager import VoiceManager
 from src.actions.office import OfficeAutomation
 from src.actions.listener import MeetingListener
+from src.actions.voice_input import VoiceInputListener
 import os
 from src.brain.agent import SystemAgent
 from src.brain.memory import MemoryManager
 from src.actions.automation import AutomationManager
 from src.utils.logger import Logger
+from src.ui.animation import ListeningIndicator
 import time
 
 # --- THEME CONFIGURATION ---
@@ -55,7 +57,11 @@ class JarvisUI(ctk.CTk):
             font=("Roboto", 12), 
             text_color="gray"
         )
-        self.status_label.pack(side="right")
+        self.status_label.pack(side="right", padx=(10, 0))
+
+        # Animation (The Eye)
+        self.animation = ListeningIndicator(self.header_frame, width=40, height=40)
+        self.animation.pack(side="right")
 
         # --- CHAT DISPLAY ---
         self.chat_display = ctk.CTkTextbox(
@@ -141,6 +147,16 @@ class JarvisUI(ctk.CTk):
 
     def update_status(self, text, color="gray"):
         self.after(0, lambda: self.status_label.configure(text=text, text_color=color))
+        
+        # Sync Animation
+        if "LISTENING" in text:
+            self.after(0, lambda: self.animation.set_state("LISTENING"))
+        elif "PROCESSING" in text or "REASONING" in text or "LOADING" in text:
+             self.after(0, lambda: self.animation.set_state("PROCESSING"))
+        elif "READY" in text or "IDLE" in text:
+             # Only revert to IDLE if not currently speaking
+             # (Speaking will revert itself after duration)
+             self.after(0, lambda: self.animation.set_state("IDLE") if self.animation.state != "SPEAKING" else None)
 
     def initialize_backend(self):
         try:
@@ -148,7 +164,7 @@ class JarvisUI(ctk.CTk):
             self.classifier = TaskClassifier()
             self.brain = ReasoningBrain()
             self.browser = BrowserManager()
-            self.voice = VoiceEngine()
+            self.voice = VoiceManager()
             self.listener = MeetingListener()
             self.agent = SystemAgent()
             self.memory = MemoryManager() # Persistent Memory
@@ -156,11 +172,18 @@ class JarvisUI(ctk.CTk):
             self.automation = AutomationManager(callback_function=lambda msg: self.log_to_chat("Jarvis", msg))
             self.automation.start()
             
+            # Voice Input (Wake Word)
+            self.voice_input = VoiceInputListener(callback_function=self.on_voice_command)
+            if self.voice_enabled.get():
+                self.voice_input.start()
+
             self.log_to_chat("System", "All systems nominal. Office & Agent modules loaded.")
-            self.update_status("READY", "#00ff00") # Green
             
             if self.voice_enabled.get():
-                self.voice.speak("Systems nominal. Ready for input.")
+                self.update_status("LISTENING (HOTWORD)", "#00ff00") # Green
+                self.voice.speak("Systems nominal. I am listening.")
+            else:
+                self.update_status("READY", "#00ff00")
         except Exception as e:
             self.log_to_chat("Error", f"Initialization Failure: {e}")
             self.update_status("SYSTEM FAILURE", "red")
@@ -184,17 +207,41 @@ class JarvisUI(ctk.CTk):
         self.chat_display.tag_config("system", foreground="#888888")
         self.chat_display.tag_config("error", foreground="#ff5555")
 
+        # Emotion Parsing
+        emotion = "NEUTRAL"
+        clean_message = message
+        
+        if "[EMOTION:" in message:
+            import re
+            match = re.search(r"\[EMOTION:\s*(\w+)\]", message)
+            if match:
+                emotion = match.group(1)
+                clean_message = message.replace(match.group(0), "").strip()
+
         if sender == "You":
-            self.chat_display.insert("end", f"\n> You: {message}\n", "user")
+            self.chat_display.insert("end", f"\n> You: {clean_message}\n", "user")
         elif sender == "System":
-             self.chat_display.insert("end", f"[SYSTEM]: {message}\n", "system")
+             self.chat_display.insert("end", f"[SYSTEM]: {clean_message}\n", "system")
         elif sender == "Error":
-             self.chat_display.insert("end", f"[ERROR]: {message}\n", "error")
+             self.chat_display.insert("end", f"[ERROR]: {clean_message}\n", "error")
         else:
-            self.chat_display.insert("end", f"\nJARVIS: {message}\n", "jarvis")
+            self.chat_display.insert("end", f"\nJARVIS: {clean_message}\n", "jarvis")
             # Speak all Jarvis responses if enabled
             if hasattr(self, 'voice') and self.voice and self.voice_enabled.get():
-                self.voice.speak(message)
+                self.animation.set_state("SPEAKING")
+                # Voice is threaded, so we need to know when it finishes? 
+                # For now, just trigger speaking. VoiceManager needs a callback or we revert to IDLE after some time.
+                # Actually, VoiceManager is fire-and-forget currently. 
+                # Let's just set it to speaking, and rely on the next 'READY' status update to clear it, 
+                # OR we can assume speaking takes time proportional to length. 
+                # Better: VoiceManager actions usually end with a status update in the main loop? No.
+                # Simplest fix: Revert to IDLE after estimated duration, or let the next command reset it.
+                # But typically 'READY' comes *after* the action is done.
+                self.voice.speak(clean_message, emotion)
+                
+                # Estimate duration (very rough: 15 chars per sec?)
+                duration_ms = max(2000, int(len(clean_message) / 15 * 1000))
+                self.after(duration_ms, lambda: self.animation.set_state("IDLE") if self.status_label.cget("text") == "READY" else None)
         
         self.chat_display.see("end")
         self.chat_display.configure(state="disabled")
@@ -211,6 +258,21 @@ class JarvisUI(ctk.CTk):
         self.update_status("PROCESSING", COLOR_ACCENT)
 
         threading.Thread(target=self.run_pipeline, args=(user_input,), daemon=True).start()
+
+    def on_voice_command(self, command):
+        """
+        Callback for VoiceInputListener.
+        """
+        self.log_to_chat("You (Voice)", command)
+        
+        # Visual Feedback
+        self.update_status("VOICE COMMAND RECEIVED", "#00e5ff")
+        
+        # Pause Listener (to avoid hearing self)
+        if hasattr(self, 'voice_input'):
+            self.voice_input.pause()
+            
+        threading.Thread(target=self.run_pipeline, args=(command,), daemon=True).start()
 
     def run_pipeline(self, user_input):
         start_time = time.time()
@@ -420,10 +482,17 @@ class JarvisUI(ctk.CTk):
                 self.logger.log_error("Pipeline", str(e))
             import traceback
             traceback.print_exc()
+            import traceback
+            traceback.print_exc()
         finally:
              if hasattr(self, 'listener') and not self.listener.is_listening:
                  self.update_status("READY", "#00ff00")
              
+             # Resume Voice Listener
+             if hasattr(self, 'voice_input') and self.voice_enabled.get():
+                 self.voice_input.resume()
+                 self.update_status("LISTENING (HOTWORD)", "#00ff00")
+
              self.after(0, lambda: self.input_field.configure(state="normal"))
              self.after(0, lambda: self.input_field.focus())
 

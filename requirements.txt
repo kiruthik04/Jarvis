@@ -17,3 +17,6 @@ psutil
 schedule
 beautifulsoup4
 requests
+edge-tts
+pygame
+asyncio

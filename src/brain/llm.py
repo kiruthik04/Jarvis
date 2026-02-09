@@ -15,7 +15,17 @@ class ReasoningBrain:
         """
         Uses a powerful cloud model to reason and answer.
         """
-        system_message = f"You are Jarvis, a helpful and intelligent AI assistant.\\n{memory_context}\\nAnswer the user's question clearly and concisely."
+        system_message = (
+            f"You are Jarvis, a helpful and intelligent AI assistant.\\n"
+            f"{memory_context}\\n"
+            f"Answer the user's question clearly and concisely.\\n"
+            f"Voice/Tone Instructions:\\n"
+            f"- You must prepend an emotion tag to your response.\\n"
+            f"- Format: '[EMOTION: TYPE] Your message here.'\\n"
+            f"- Valid Types: NEUTRAL, HAPPY, SAD, EXHAUSTED, MOTIVATED, ANGRY.\\n"
+            f"- Example: '[EMOTION: HAPPY] I'm glad to hear that!'\\n"
+            f"- Choose the emotion based on the user's input and context."
+        )
         
         messages = [
             {"role": "system", "content": system_message},

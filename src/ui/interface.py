@@ -14,6 +14,7 @@ from src.brain.memory import MemoryManager
 from src.actions.automation import AutomationManager
 from src.utils.logger import Logger
 from src.ui.animation import ListeningIndicator
+from src.ui.overlay import OverlayWindow
 import time
 
 # --- THEME CONFIGURATION ---
@@ -59,9 +60,19 @@ class JarvisUI(ctk.CTk):
         )
         self.status_label.pack(side="right", padx=(10, 0))
 
-        # Animation (The Eye)
-        self.animation = ListeningIndicator(self.header_frame, width=40, height=40)
-        self.animation.pack(side="right")
+        # floating Overlay (New)
+        try:
+            self.overlay = OverlayWindow(self, width=120, height=120)
+            self.overlay.withdraw() # Start hidden until ready? Or show immediately?
+            # Let's show it immediately so user sees it
+            self.overlay.deiconify()
+        except Exception as e:
+            print(f"Overlay Error: {e}")
+            self.overlay = None
+
+        # Old Animation (Removed as per user request)
+        # self.animation = ListeningIndicator(self.header_frame, width=40, height=40)
+        # self.animation.pack(side="right")
 
         # --- CHAT DISPLAY ---
         self.chat_display = ctk.CTkTextbox(
@@ -148,15 +159,22 @@ class JarvisUI(ctk.CTk):
     def update_status(self, text, color="gray"):
         self.after(0, lambda: self.status_label.configure(text=text, text_color=color))
         
-        # Sync Animation
+        # Sync Animation (Overlay)
+        state = "IDLE"
         if "LISTENING" in text:
-            self.after(0, lambda: self.animation.set_state("LISTENING"))
+            state = "LISTENING"
         elif "PROCESSING" in text or "REASONING" in text or "LOADING" in text:
-             self.after(0, lambda: self.animation.set_state("PROCESSING"))
+             state = "PROCESSING"
         elif "READY" in text or "IDLE" in text:
-             # Only revert to IDLE if not currently speaking
-             # (Speaking will revert itself after duration)
-             self.after(0, lambda: self.animation.set_state("IDLE") if self.animation.state != "SPEAKING" else None)
+             state = "IDLE"
+             
+        if self.overlay:
+            # Only revert to IDLE if not currently speaking
+            # (Speaking will revert itself after duration)
+            if state == "IDLE" and self.overlay.orb.state == "SPEAKING":
+                pass
+            else:
+                self.after(0, lambda: self.overlay.set_state(state))
 
     def initialize_backend(self):
         try:
@@ -228,20 +246,17 @@ class JarvisUI(ctk.CTk):
             self.chat_display.insert("end", f"\nJARVIS: {clean_message}\n", "jarvis")
             # Speak all Jarvis responses if enabled
             if hasattr(self, 'voice') and self.voice and self.voice_enabled.get():
-                self.animation.set_state("SPEAKING")
-                # Voice is threaded, so we need to know when it finishes? 
-                # For now, just trigger speaking. VoiceManager needs a callback or we revert to IDLE after some time.
-                # Actually, VoiceManager is fire-and-forget currently. 
-                # Let's just set it to speaking, and rely on the next 'READY' status update to clear it, 
-                # OR we can assume speaking takes time proportional to length. 
-                # Better: VoiceManager actions usually end with a status update in the main loop? No.
-                # Simplest fix: Revert to IDLE after estimated duration, or let the next command reset it.
-                # But typically 'READY' comes *after* the action is done.
+                if self.overlay:
+                     self.overlay.set_state("SPEAKING")
+                
+                # Voice is threaded...
                 self.voice.speak(clean_message, emotion)
                 
                 # Estimate duration (very rough: 15 chars per sec?)
                 duration_ms = max(2000, int(len(clean_message) / 15 * 1000))
-                self.after(duration_ms, lambda: self.animation.set_state("IDLE") if self.status_label.cget("text") == "READY" else None)
+                
+                if self.overlay:
+                    self.after(duration_ms, lambda: self.overlay.set_state("IDLE") if self.status_label.cget("text") == "READY" else None)
         
         self.chat_display.see("end")
         self.chat_display.configure(state="disabled")

@@ -3,8 +3,11 @@ from src.ui.animation import ListeningIndicator
 import tkinter as tk
 
 class OverlayWindow(ctk.CTkToplevel):
-    def __init__(self, master, width=200, height=200):
+    def __init__(self, master, width=200, height=200, restore_callback=None):
         super().__init__(master)
+        
+        self.restore_callback = restore_callback
+
         
         self.width = width
         self.height = height
@@ -38,6 +41,15 @@ class OverlayWindow(ctk.CTkToplevel):
         
         # Make the window click-through (optional, but good for overlays)
         # On Windows, this is complex via ctypes. For now, let's just keep it simple.
+        
+        # Bind Double Click to Restore
+        if self.restore_callback:
+            self.bind("<Double-Button-1>", self.on_double_click)
+            self.orb.bind("<Double-Button-1>", self.on_double_click)
+
+    def on_double_click(self, event):
+        if self.restore_callback:
+            self.restore_callback()
         
     def set_state(self, state):
         self.orb.set_state(state)

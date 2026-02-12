@@ -62,10 +62,8 @@ class JarvisUI(ctk.CTk):
 
         # floating Overlay (New)
         try:
-            self.overlay = OverlayWindow(self, width=120, height=120)
-            self.overlay.withdraw() # Start hidden until ready? Or show immediately?
-            # Let's show it immediately so user sees it
-            self.overlay.deiconify()
+            self.overlay = OverlayWindow(self, width=120, height=120, restore_callback=self.restore_chat_window)
+            self.overlay.withdraw() # Start hidden
         except Exception as e:
             print(f"Overlay Error: {e}")
             self.overlay = None
@@ -206,6 +204,16 @@ class JarvisUI(ctk.CTk):
             self.log_to_chat("Error", f"Initialization Failure: {e}")
             self.update_status("SYSTEM FAILURE", "red")
 
+    def switch_to_overlay(self):
+        if self.overlay:
+            self.withdraw()
+            self.overlay.deiconify()
+            
+    def restore_chat_window(self):
+        self.deiconify()
+        if self.overlay:
+            self.overlay.withdraw()
+
     def on_enter_pressed(self, event):
         self.process_input()
         
@@ -262,6 +270,9 @@ class JarvisUI(ctk.CTk):
         self.chat_display.configure(state="disabled")
 
     def process_input(self):
+        # Ensure we are in chat mode if manually triggered
+        self.restore_chat_window()
+        
         user_input = self.input_field.get()
         if not user_input.strip():
             return
@@ -280,6 +291,9 @@ class JarvisUI(ctk.CTk):
         """
         self.log_to_chat("You (Voice)", command)
         
+        # Switch to Overlay for Voice Interaction
+        self.after(0, self.switch_to_overlay)
+
         # Visual Feedback
         self.update_status("VOICE COMMAND RECEIVED", "#00e5ff")
         

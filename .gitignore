@@ -28,7 +28,10 @@ generated_docs/
 
 # Temp Text Files (But keep requirements.txt)
 *.txt
+*.log
 !requirements.txt
+
+# Tests and Test Artifacts
 tests/
 *_test.py
 test_*.py

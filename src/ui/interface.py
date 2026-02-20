@@ -303,6 +303,28 @@ class JarvisUI(ctk.CTk):
             
         threading.Thread(target=self.run_pipeline, args=(command,), daemon=True).start()
 
+    def _is_voice_mode_command(self, text):
+        """Check if user wants to switch to voice/overlay mode."""
+        keywords = [
+            "voice mode", "switch to voice", "activate voice", "go to voice",
+            "voice overlay", "switch to overlay", "overlay mode",
+            "enable voice mode", "turn on voice mode", "jarvis listen",
+            "start voice mode", "use voice mode"
+        ]
+        t = text.lower().strip()
+        return any(k in t for k in keywords)
+
+    def _is_chat_mode_command(self, text):
+        """Check if user wants to switch back to chat/text mode."""
+        keywords = [
+            "chat mode", "switch to chat", "go to chat", "text mode",
+            "back to chat", "return to chat", "restore chat",
+            "disable voice mode", "turn off voice mode", "hide overlay",
+            "chat interface", "show chat"
+        ]
+        t = text.lower().strip()
+        return any(k in t for k in keywords)
+
     def run_pipeline(self, user_input):
         start_time = time.time()
         classification = {}
@@ -310,6 +332,19 @@ class JarvisUI(ctk.CTk):
         response_text = ""
         
         try:
+            # --- PRE-CLASSIFIER: Handle UI mode switching immediately ---
+            if self._is_voice_mode_command(user_input):
+                self.after(0, self.switch_to_overlay)
+                self.log_to_chat("Jarvis", "Switching to Voice Mode. [EMOTION: CONFIDENT]")
+                self.update_status("VOICE MODE", COLOR_ACCENT)
+                return
+
+            if self._is_chat_mode_command(user_input):
+                self.after(0, self.restore_chat_window)
+                self.log_to_chat("Jarvis", "Returning to Chat Mode. [EMOTION: NEUTRAL]")
+                self.update_status("READY", "#00ff00")
+                return
+
             # Contextual Handle: Open Last Generated File
             if hasattr(self, "last_generated_file") and self.last_generated_file:
                 if user_input.lower().strip() in ["yes", "open it", "open", "sure", "ok", "please"]:

@@ -84,20 +84,23 @@ class VoiceInputListener:
             text = recognizer.recognize_google(audio).lower()
             print(f"[VoiceInput] Heard: '{text}'", flush=True)
 
-            # Wake Word: "Jarvis", "Hey Jarvis", "Hello Jarvis"
+            # Wake Word Detection
             if "jarvis" in text:
-                pattern = r"(hey|hello|hi)?\s*jarvis\s*(.*)"
+                # Capture everything after "jarvis" optionally prefixed by hey/hello/hi
+                pattern = r"(?:hey|hello|hi)?\s*jarvis\s*(.*)"
                 match = re.search(pattern, text)
                 if match:
-                    command = match.group(2).strip()
+                    command = match.group(1).strip()
                     if command:
                         print(f"[VoiceInput] Command extracted: '{command}'", flush=True)
                         self.callback(command)
                     else:
                         # Just "Jarvis" with no command — trigger greeting
+                        print("[VoiceInput] Wake word detected with no command. Triggering greeting.", flush=True)
                         self.callback("hello")
             else:
-                print("[VoiceInput] Wake word 'jarvis' not detected.", flush=True)
+                # Discard background chatter
+                print(f"[VoiceInput] Ignored (no wake word): '{text}'", flush=True)
 
         except sr.UnknownValueError:
             print("[VoiceInput] Could not understand audio.", flush=True)

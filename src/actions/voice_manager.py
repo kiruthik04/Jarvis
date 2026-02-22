@@ -7,10 +7,11 @@ import queue
 import time
 
 class VoiceManager:
-    def __init__(self):
+    def __init__(self, on_speech_complete=None):
         self.queue = queue.Queue()
         self.is_running = True
         self.current_process = None
+        self.on_speech_complete = on_speech_complete
         
         # Initialize Pygame Mixer
         try:
@@ -66,9 +67,15 @@ class VoiceManager:
                 # Play Audio
                 self._play_audio(output_file)
                 
+                # Notify completion
+                if self.on_speech_complete:
+                    self.on_speech_complete()
+                
                 self.queue.task_done()
             except Exception as e:
                 print(f"Voice Error: {e}")
+                if hasattr(self, 'on_speech_complete') and self.on_speech_complete:
+                     self.on_speech_complete()
 
     def _apply_emotion(self, emotion):
         """

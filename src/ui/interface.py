@@ -180,7 +180,7 @@ class JarvisUI(ctk.CTk):
             self.classifier = TaskClassifier()
             self.brain = ReasoningBrain()
             self.browser = BrowserManager()
-            self.voice = VoiceManager()
+            self.voice = VoiceManager(on_speech_complete=self.resume_voice_listener)
             self.listener = MeetingListener()
             self.agent = SystemAgent()
             self.memory = MemoryManager() # Persistent Memory
@@ -213,6 +213,11 @@ class JarvisUI(ctk.CTk):
         self.deiconify()
         if self.overlay:
             self.overlay.withdraw()
+
+    def resume_voice_listener(self):
+        if hasattr(self, 'voice_input') and self.voice_enabled.get():
+            self.voice_input.resume()
+            self.update_status("LISTENING (HOTWORD)", "#00ff00")
 
     def on_enter_pressed(self, event):
         self.process_input()

@@ -11,6 +11,7 @@ Choose EXACTLY ONE of the following task types:
 - MEMORY_ACTION
 - AUTOMATION_ACTION
 - THINK_AND_ANSWER
+- ANALYZE_SCREEN
 
 --------------------------------------------------
 TASK TYPE DEFINITIONS:
@@ -44,8 +45,10 @@ Requests to set reminders, schedule tasks, or check pending automations.
 (e.g., "Remind me to call Mom at 5 PM", "What reminders do I have?")
 
 THINK_AND_ANSWER:
-Requests that can be answered using reasoning, explanation, or
-general knowledge without system actions or web browsing.
+Requests where the user asks a general knowledge question or needs reasoning, but NOT related to the screen or system actions.
+
+ANALYZE_SCREEN:
+Requests where the user explicitly asks Jarvis to look at, read, explain, or analyze their current screen or what is currently visible on their display.
 --------------------------------------------------
 
 RULES (MANDATORY):
@@ -58,7 +61,7 @@ RULES (MANDATORY):
 OUTPUT FORMAT (STRICT — FOLLOW EXACTLY):
 
 Task Type:
-<ONE of: SYSTEM_ACTION | WEB_SEARCH | OFFICE_ACTION | MEETING_MODE | GENERAL_TASK | MEMORY_ACTION | THINK_AND_ANSWER>
+<ONE of: SYSTEM_ACTION | WEB_SEARCH | OFFICE_ACTION | MEETING_MODE | GENERAL_TASK | MEMORY_ACTION | THINK_AND_ANSWER | ANALYZE_SCREEN>
 
 Confidence:
 <value between 0.0 and 1.0>
@@ -138,5 +141,9 @@ Search Query:
 If Task Type = THINK_AND_ANSWER:
 Answer:
 <clear, concise answer>
+
+If Task Type = ANALYZE_SCREEN:
+Question:
+<the question the user is asking about the screen>
 """
 

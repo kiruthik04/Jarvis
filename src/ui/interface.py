@@ -531,6 +531,30 @@ class JarvisUI(ctk.CTk):
                 self.log_to_chat("Jarvis", answer)
                 response_text = answer
 
+            elif task_type == "ANALYZE_SCREEN":
+                question = classification.get("question", "What is on my screen?")
+                self.log_to_chat("System", "Taking a look at your screen...")
+                self.update_status("ANALYZING SCREEN", "#00e5ff")
+                
+                # Take temporary screenshot
+                import time
+                import pyautogui
+                import os
+                
+                filename = f"temp_vision_{int(time.time())}.png"
+                pyautogui.screenshot().save(filename)
+                
+                # Analyze it
+                answer = self.brain.analyze_image(filename, question)
+                self.log_to_chat("Jarvis", answer)
+                response_text = answer
+                
+                # Cleanup
+                try:
+                    os.remove(filename)
+                except Exception as e:
+                    print(f"Screenshot cleanup error: {e}")
+
             else:
                 self.log_to_chat("Error", f"Unknown intent signature: {classification}")
                 response_text = "Unknown intent"

@@ -77,3 +77,34 @@ Your task is to write a Python script to accomplish the user's goal.
         except Exception as e:
             print(f"Code Generation Error: {e}")
             return None
+
+    def analyze_image(self, image_path, question):
+        """
+        Uses a vision model to analyze an image (like a screenshot).
+        """
+        import base64
+        
+        try:
+            with open(image_path, "rb") as img_file:
+                b64_img = base64.b64encode(img_file.read()).decode('utf-8')
+                
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question + "\\nOutput your answer with an emotion tag like [EMOTION: NEUTRAL] at the beginning."},
+                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_img}"}}
+                    ]
+                }
+            ]
+            
+            # Use Llama 3.2 Vision Model available on HuggingFace Free Tier (usually)
+            response = self.client.chat_completion(
+                model="meta-llama/Llama-3.2-11B-Vision-Instruct",
+                messages=messages,
+                max_tokens=600,
+                temperature=0.3
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            return f"[EMOTION: SAD] I encountered an error while trying to see your screen: {e}"

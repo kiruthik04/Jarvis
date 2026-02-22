@@ -51,7 +51,8 @@ class TaskClassifier:
                 "MEETING_MODE", 
                 "GENERAL_TASK",
                 "MEMORY_ACTION",
-                "AUTOMATION_ACTION"
+                "AUTOMATION_ACTION",
+                "ANALYZE_SCREEN"
             ]
             
             if extracted_type in valid_types:
@@ -124,6 +125,14 @@ class TaskClassifier:
             answer_match = re.search(r"Answer:\s*(.+)", text, re.DOTALL)
             if answer_match:
                 parsed["answer"] = answer_match.group(1).strip()
+
+        # 7. ANALYZE_SCREEN (Question)
+        elif parsed["task_type"] == "ANALYZE_SCREEN":
+            question_match = re.search(r"Question:\s*(.+)", text, re.DOTALL)
+            if question_match:
+                parsed["question"] = question_match.group(1).strip()
+            else:
+                parsed["question"] = "What is currently shown on my screen?"
 
         parsed["raw_output"] = text
         print(f"[DEBUG] Parsed classification: {parsed}")

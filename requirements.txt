@@ -20,3 +20,8 @@ requests
 edge-tts
 pygame
 asyncio
+
+# Gmail & Google Calendar
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib

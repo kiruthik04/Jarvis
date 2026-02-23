@@ -12,6 +12,7 @@ Choose EXACTLY ONE of the following task types:
 - AUTOMATION_ACTION
 - THINK_AND_ANSWER
 - ANALYZE_SCREEN
+- EMAIL_ACTION
 
 --------------------------------------------------
 TASK TYPE DEFINITIONS:
@@ -49,6 +50,9 @@ Requests where the user asks a general knowledge question or needs reasoning, bu
 
 ANALYZE_SCREEN:
 Requests where the user explicitly asks Jarvis to look at, read, explain, or analyze their current screen or what is currently visible on their display.
+
+EMAIL_ACTION:
+Requests related to Gmail (reading emails, searching emails) or Google Calendar (checking schedule, creating events, scheduling meetings).
 --------------------------------------------------
 
 RULES (MANDATORY):
@@ -61,7 +65,7 @@ RULES (MANDATORY):
 OUTPUT FORMAT (STRICT — FOLLOW EXACTLY):
 
 Task Type:
-<ONE of: SYSTEM_ACTION | WEB_SEARCH | OFFICE_ACTION | MEETING_MODE | GENERAL_TASK | MEMORY_ACTION | THINK_AND_ANSWER | ANALYZE_SCREEN>
+<ONE of: SYSTEM_ACTION | WEB_SEARCH | OFFICE_ACTION | MEETING_MODE | GENERAL_TASK | MEMORY_ACTION | THINK_AND_ANSWER | ANALYZE_SCREEN | EMAIL_ACTION>
 
 Confidence:
 <value between 0.0 and 1.0>
@@ -145,5 +149,20 @@ Answer:
 If Task Type = ANALYZE_SCREEN:
 Question:
 <the question the user is asking about the screen>
+
+If Task Type = EMAIL_ACTION:
+Intent:
+<One of: read_emails | search_emails | get_calendar | create_event>
+Parameters:
+- query: <search term, only for search_emails>
+- title: <event title, only for create_event>
+- datetime: <ISO datetime like 2026-02-24T15:00:00, only for create_event>
+- duration: <duration in minutes, default 60, only for create_event>
+
+Examples for EMAIL_ACTION:
+- "Read my emails" -> read_emails
+- "Any emails from John?" -> search_emails (query="from:John")
+- "What's on my calendar?" -> get_calendar
+- "Schedule a standup tomorrow at 10 AM" -> create_event (title="Standup", datetime="2026-02-24T10:00:00")
 """
 

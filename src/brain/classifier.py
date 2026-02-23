@@ -52,7 +52,8 @@ class TaskClassifier:
                 "GENERAL_TASK",
                 "MEMORY_ACTION",
                 "AUTOMATION_ACTION",
-                "ANALYZE_SCREEN"
+                "ANALYZE_SCREEN",
+                "EMAIL_ACTION"
             ]
             
             if extracted_type in valid_types:
@@ -133,6 +134,17 @@ class TaskClassifier:
                 parsed["question"] = question_match.group(1).strip()
             else:
                 parsed["question"] = "What is currently shown on my screen?"
+
+        # 8. EMAIL_ACTION (Intent + Parameters)
+        elif parsed["task_type"] == "EMAIL_ACTION":
+            intent_match = re.search(r"Intent:\s*(.+)", text)
+            if intent_match:
+                parsed["intent"] = intent_match.group(1).strip()
+            params = {}
+            param_matches = re.finditer(r"-\s*(.+?):\s*(.+)", text)
+            for match in param_matches:
+                params[match.group(1).strip()] = match.group(2).strip()
+            parsed["parameters"] = params
 
         parsed["raw_output"] = text
         print(f"[DEBUG] Parsed classification: {parsed}")

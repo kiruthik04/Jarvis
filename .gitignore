@@ -38,3 +38,7 @@ test_*.py
 debug_voice.py
 find_working_mic.py
 temp_speech.mp3
+
+# Google API Credentials (NEVER commit these)
+credentials.json
+token.json

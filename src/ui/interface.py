@@ -16,6 +16,7 @@ from src.utils.logger import Logger
 from src.ui.animation import ListeningIndicator
 from src.ui.overlay import OverlayWindow
 from src.actions.gmail import GmailManager
+from src.config import Config
 import time
 
 # --- THEME CONFIGURATION ---
@@ -189,8 +190,13 @@ class JarvisUI(ctk.CTk):
             self.automation = AutomationManager(callback_function=lambda msg: self.log_to_chat("Jarvis", msg))
             self.automation.start()
             
-            # Gmail & Calendar
-            self.gmail = GmailManager()
+            # Gmail & Calendar (optional — controlled by GMAIL_ENABLED in .env)
+            if Config.GMAIL_ENABLED:
+                self.gmail = GmailManager()
+                self.log_to_chat("System", "Gmail & Calendar module loaded.")
+            else:
+                self.gmail = None
+                self.log_to_chat("System", "Gmail disabled. Set GMAIL_ENABLED=true in .env to enable.")
 
             # Voice Input (Wake Word)
             self.voice_input = VoiceInputListener(callback_function=self.on_voice_command)
@@ -563,60 +569,63 @@ class JarvisUI(ctk.CTk):
                     print(f"Screenshot cleanup error: {e}")
 
             elif task_type == "EMAIL_ACTION":
-                intent = classification.get("intent", "")
-                params = classification.get("parameters", {})
-                self.log_to_chat("System", f"Accessing Gmail: {intent}...")
-                self.update_status("ACCESSING EMAIL", "#00e5ff")
-
-                if intent == "read_emails":
-                    emails = self.gmail.read_unread_emails(max_results=5)
-                    if isinstance(emails, list):
-                        # Build a summary string for LLM to narrate
-                        raw = "\n".join([f"From: {e['sender']}\nSubject: {e['subject']}\nPreview: {e['snippet']}" for e in emails])
-                        summary = self.brain.think(f"Summarize these unread emails in a brief, conversational way:\n\n{raw}")
-                        self.log_to_chat("Jarvis", summary)
-                        response_text = summary
-                    else:
-                        self.log_to_chat("Jarvis", emails)
-                        response_text = emails
-
-                elif intent == "search_emails":
-                    query = params.get("query", "")
-                    emails = self.gmail.search_emails(query, max_results=5)
-                    if isinstance(emails, list):
-                        raw = "\n".join([f"From: {e['sender']}\nSubject: {e['subject']}\nPreview: {e['snippet']}" for e in emails])
-                        summary = self.brain.think(f"Summarize these search results for the query '{query}':\n\n{raw}")
-                        self.log_to_chat("Jarvis", summary)
-                        response_text = summary
-                    else:
-                        self.log_to_chat("Jarvis", emails)
-                        response_text = emails
-
-                elif intent == "get_calendar":
-                    events = self.gmail.get_upcoming_events(max_results=7)
-                    if isinstance(events, list):
-                        raw = "\n".join([f"{e['title']} | Start: {e['start']} | End: {e['end']}" for e in events])
-                        summary = self.brain.think(f"Narrate these upcoming calendar events in a friendly, clear manner:\n\n{raw}")
-                        self.log_to_chat("Jarvis", summary)
-                        response_text = summary
-                    else:
-                        self.log_to_chat("Jarvis", events)
-                        response_text = events
-
-                elif intent == "create_event":
-                    title = params.get("title", "New Event")
-                    dt_str = params.get("datetime", "")
-                    duration = int(params.get("duration", 60))
-                    if dt_str:
-                        result = self.gmail.create_calendar_event(title, dt_str, duration)
-                        self.log_to_chat("Jarvis", f"[EMOTION: HAPPY] {result}")
-                        response_text = result
-                    else:
-                        self.log_to_chat("Jarvis", "[EMOTION: NEUTRAL] Please specify a date and time for the event.")
-                        response_text = "No datetime specified"
+                if not self.gmail:
+                    self.log_to_chat("Jarvis", "Gmail is currently disabled. Set GMAIL_ENABLED=true in the .env file and restart to use email features.")
+                    response_text = "Gmail disabled"
                 else:
-                    self.log_to_chat("Jarvis", "[EMOTION: NEUTRAL] I didn't understand that email request.")
-                    response_text = "Unknown email intent"
+                    intent = classification.get("intent", "")
+                    params = classification.get("parameters", {})
+                    self.log_to_chat("System", f"Accessing Gmail: {intent}...")
+                    self.update_status("ACCESSING EMAIL", "#00e5ff")
+
+                    if intent == "read_emails":
+                        emails = self.gmail.read_unread_emails(max_results=5)
+                        if isinstance(emails, list):
+                            raw = "\n".join([f"From: {e['sender']}\nSubject: {e['subject']}\nPreview: {e['snippet']}" for e in emails])
+                            summary = self.brain.think(f"Summarize these unread emails in a brief, conversational way:\n\n{raw}")
+                            self.log_to_chat("Jarvis", summary)
+                            response_text = summary
+                        else:
+                            self.log_to_chat("Jarvis", emails)
+                            response_text = emails
+
+                    elif intent == "search_emails":
+                        query = params.get("query", "")
+                        emails = self.gmail.search_emails(query, max_results=5)
+                        if isinstance(emails, list):
+                            raw = "\n".join([f"From: {e['sender']}\nSubject: {e['subject']}\nPreview: {e['snippet']}" for e in emails])
+                            summary = self.brain.think(f"Summarize these search results for the query '{query}':\n\n{raw}")
+                            self.log_to_chat("Jarvis", summary)
+                            response_text = summary
+                        else:
+                            self.log_to_chat("Jarvis", emails)
+                            response_text = emails
+
+                    elif intent == "get_calendar":
+                        events = self.gmail.get_upcoming_events(max_results=7)
+                        if isinstance(events, list):
+                            raw = "\n".join([f"{e['title']} | Start: {e['start']} | End: {e['end']}" for e in events])
+                            summary = self.brain.think(f"Narrate these upcoming calendar events in a friendly, clear manner:\n\n{raw}")
+                            self.log_to_chat("Jarvis", summary)
+                            response_text = summary
+                        else:
+                            self.log_to_chat("Jarvis", events)
+                            response_text = events
+
+                    elif intent == "create_event":
+                        title = params.get("title", "New Event")
+                        dt_str = params.get("datetime", "")
+                        duration = int(params.get("duration", 60))
+                        if dt_str:
+                            result = self.gmail.create_calendar_event(title, dt_str, duration)
+                            self.log_to_chat("Jarvis", f"[EMOTION: HAPPY] {result}")
+                            response_text = result
+                        else:
+                            self.log_to_chat("Jarvis", "[EMOTION: NEUTRAL] Please specify a date and time for the event.")
+                            response_text = "No datetime specified"
+                    else:
+                        self.log_to_chat("Jarvis", "[EMOTION: NEUTRAL] I didn't understand that email request.")
+                        response_text = "Unknown email intent"
 
             else:
                 self.log_to_chat("Error", f"Unknown intent signature: {classification}")

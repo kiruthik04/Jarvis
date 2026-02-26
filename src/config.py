@@ -9,3 +9,6 @@ class Config:
     
     # Browser config could go here
     HEADLESS_BROWSER = False
+
+    # Set GMAIL_ENABLED=false in .env to skip Google auth on startup
+    GMAIL_ENABLED = os.getenv("GMAIL_ENABLED", "true").lower() == "true"

@@ -546,9 +546,7 @@ class JarvisUI(ctk.CTk):
                 self.update_status("ANALYZING SCREEN", "#00e5ff")
                 
                 # Take temporary screenshot
-                import time
                 import pyautogui
-                import os
                 
                 filename = f"temp_vision_{int(time.time())}.png"
                 pyautogui.screenshot().save(filename)
@@ -633,8 +631,6 @@ class JarvisUI(ctk.CTk):
             self.log_to_chat("Error", f"Pipeline Error: {str(e)}")
             if hasattr(self, 'logger'):
                 self.logger.log_error("Pipeline", str(e))
-            import traceback
-            traceback.print_exc()
             import traceback
             traceback.print_exc()
         finally:

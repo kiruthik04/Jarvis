@@ -5,39 +5,43 @@ from pptx.util import Inches, Pt
 
 class OfficeAutomation:
     @staticmethod
-    def create_word_document(filename, content):
+    def create_word_document(topic: str, content: str) -> str:
         """
-        Creates a Word document with the given content.
-        Content can be a string (single paragraph) or a list of strings (multiple paragraphs).
+        Creates a Word document using `topic` as the document title.
+        Content can be a plain string or newline-separated paragraphs.
+        Returns: absolute file path string, or error message string.
         """
+        if not topic or not isinstance(topic, str):
+            return "Failed to create Word document: 'topic' must be a non-empty string."
+        if content is None:
+            content = ""
+
         try:
             doc = Document()
-            
-            # Add Title
-            doc.add_heading(filename.replace(".docx", "").replace("_", " ").title(), 0)
-            
+
+            # Title from topic
+            doc.add_heading(topic.strip(), level=0)
+
             if isinstance(content, list):
                 for paragraph in content:
-                    doc.add_paragraph(paragraph)
+                    if paragraph.strip():
+                        doc.add_paragraph(paragraph.strip())
             else:
-                # Split by double newlines for paragraphs, or single if needed
-                paragraphs = content.split('\n')
-                for p in paragraphs:
+                for p in content.split('\n'):
                     if p.strip():
                         doc.add_paragraph(p.strip())
-            
-            # Ensure filename has extension
-            if not filename.endswith(".docx"):
-                filename += ".docx"
-                
-            # Save to user's Documents folder or current directory
-            # For this environment, we'll save to a 'generated_docs' folder in the project root
-            output_dir = os.path.join(os.getcwd(), "generated_docs")
+
+            filename = topic.replace(' ', '_').replace('/', '_') + ".docx"
+            output_dir = os.path.join(os.getcwd(), "outputs", "documents")
             os.makedirs(output_dir, exist_ok=True)
             file_path = os.path.abspath(os.path.join(output_dir, filename))
-            
+
             doc.save(file_path)
-            return file_path # Return just the path for the UI to format
+
+            if not os.path.exists(file_path):
+                return f"Failed to create Word document: file not found after save."
+
+            return file_path
 
         except Exception as e:
             return f"Failed to create Word document: {e}"
@@ -85,7 +89,7 @@ class OfficeAutomation:
                     p.level = 0 # Top level bullet
             
             filename = f"{topic.replace(' ', '_')}.pptx"
-            output_dir = os.path.join(os.getcwd(), "generated_docs")
+            output_dir = os.path.join(os.getcwd(), "outputs", "documents")
             os.makedirs(output_dir, exist_ok=True)
             file_path = os.path.join(output_dir, filename)
             

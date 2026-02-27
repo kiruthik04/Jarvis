@@ -1,22 +1,22 @@
 import customtkinter as ctk
 import threading
-from src.brain.classifier import TaskClassifier
-from src.brain.llm import ReasoningBrain
-from src.actions.system_ops import SystemOps
-from src.actions.browser import BrowserManager
-from src.actions.voice_manager import VoiceManager
-from src.actions.office import OfficeAutomation
-from src.actions.listener import MeetingListener
-from src.actions.voice_input import VoiceInputListener
+from jarvis.brain.classifier import TaskClassifier
+from jarvis.brain.llm import ReasoningBrain
+from jarvis.actions.system_ops import SystemOps
+from jarvis.actions.browser import BrowserManager
+from jarvis.actions.voice_manager import VoiceManager
+from jarvis.actions.office import OfficeAutomation
+from jarvis.actions.listener import MeetingListener
+from jarvis.actions.voice_input import VoiceInputListener
 import os
-from src.brain.agent import SystemAgent
-from src.brain.memory import MemoryManager
-from src.actions.automation import AutomationManager
-from src.utils.logger import Logger
-from src.ui.animation import ListeningIndicator
-from src.ui.overlay import OverlayWindow
-from src.actions.gmail import GmailManager
-from src.config import Config
+from jarvis.brain.agent import SystemAgent
+from jarvis.brain.memory import MemoryManager
+from jarvis.actions.automation import AutomationManager
+from jarvis.utils.logger import Logger
+from jarvis.ui.animation import ListeningIndicator
+from jarvis.ui.overlay import OverlayWindow
+from jarvis.actions.gmail import GmailManager
+from jarvis.config import Config
 import time
 
 # --- THEME CONFIGURATION ---

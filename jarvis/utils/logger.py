@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 class Logger:
-    def __init__(self, log_file="logs/jarvis_activity.json"):
+    def __init__(self, log_file="data/logs/jarvis_activity.json"):
         self.log_file = log_file
         self._ensure_log_dir()
 

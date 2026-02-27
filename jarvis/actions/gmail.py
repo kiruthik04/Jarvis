@@ -16,8 +16,8 @@ SCOPES = [
     "https://www.googleapis.com/auth/calendar",
 ]
 
-CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "credentials.json")
-TOKEN_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "token.json")
+CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "config", "credentials.json")
+TOKEN_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "config", "token.json")
 
 
 def _get_credentials():

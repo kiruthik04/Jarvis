@@ -4,7 +4,7 @@ import time
 import os
 
 class MemoryManager:
-    def __init__(self, db_path="jarvis_memory.db"):
+    def __init__(self, db_path="data/memory/jarvis_memory.db"):
         self.db_path = db_path
         self._init_db()
 

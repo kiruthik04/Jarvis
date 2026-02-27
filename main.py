@@ -1,5 +1,5 @@
 import sys
-from src.ui.interface import JarvisUI
+from jarvis.ui.interface import JarvisUI
 
 def main():
     print("Launching Jarvis UI...")

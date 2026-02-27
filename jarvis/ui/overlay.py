@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from src.ui.animation import ListeningIndicator
+from jarvis.ui.animation import ListeningIndicator
 import tkinter as tk
 
 class OverlayWindow(ctk.CTkToplevel):

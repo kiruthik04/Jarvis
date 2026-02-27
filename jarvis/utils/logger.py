@@ -18,23 +18,32 @@ class Logger:
             with open(self.log_file, "w") as f:
                 json.dump([], f)
 
-    def log_interaction(self, user_input, classification, action, response, latency=0.0):
+    def log_interaction(self, user_input: str, classification: dict = None,
+                         action_taken: str = None, response: str = None,
+                         latency: float = 0.0,
+                         # Legacy aliases
+                         action: str = None, response_text: str = None):
+        """Log a completed pipeline interaction.
+        Accepts both old (action=, response=) and new (action_taken=, response_text=) naming.
+        """
+        resolved_action   = action_taken or action or "unknown"
+        resolved_response = response or response_text or ""
+
         entry = {
-            "timestamp": datetime.now().isoformat(),
-            "user_input": user_input,
-            "classification": classification,
-            "action": action,
-            "response": response,
-            "latency_ms": round(latency * 1000, 2)
+            "timestamp":      datetime.now().isoformat(),
+            "user_input":     user_input,
+            "classification": classification or {},
+            "action_taken":   resolved_action,
+            "response":       resolved_response,
+            "latency_ms":     round(latency * 1000, 2)
         }
-        
+
         try:
             with open(self.log_file, "r+") as f:
                 try:
                     logs = json.load(f)
                 except json.JSONDecodeError:
                     logs = []
-                
                 logs.append(entry)
                 f.seek(0)
                 json.dump(logs, f, indent=4)

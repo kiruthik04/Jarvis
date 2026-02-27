@@ -424,7 +424,7 @@ class JarvisUI(ctk.CTk):
                     if not slides: # Fallback
                         slides = [{'title': topic, 'content': raw_content}]
                         
-                    result_path = OfficeAutomation.create_presentation(topic, slides)
+                    result_path = OfficeAutomation.create_presentation(slides)
 
                 # Handle Result
                 if result_path and os.path.exists(result_path):

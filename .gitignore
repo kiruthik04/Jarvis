@@ -8,14 +8,23 @@ vscode/
 .idea/
 
 # Local Data
+data/
+outputs/
 logs/
 browser_profile/
 jarvis_memory.db
 test_memory.db
+tests/test_integration_memory.db
 
-# Test Outputs
+# Test Outputs & Assets
 test_output*.txt
 test_results*.txt
+tests/reports/
+screenshots/
+*.png
+*.jpg
+temp_vision_*.png
+screenshot_*.png
 
 # Temporary Scripts
 read_log.py
@@ -23,8 +32,10 @@ check_system.py
 
 # Generated Documents
 generated_docs/
+outputs/documents/
 *.docx
 *.doc
+*.pptx
 
 # Temp Text Files (But keep requirements.txt)
 *.txt
@@ -42,3 +53,5 @@ temp_speech.mp3
 # Google API Credentials (NEVER commit these)
 credentials.json
 token.json
+config/credentials.json
+config/token.json

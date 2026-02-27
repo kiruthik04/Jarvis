@@ -43,7 +43,15 @@ class VoiceManager:
         """
         with self.queue.mutex:
             self.queue.queue.clear()
-        pygame.mixer.music.stop()
+        try:
+            if pygame.mixer.get_init():
+                pygame.mixer.music.stop()
+        except Exception:
+            pass
+
+    def stop_speaking(self):
+        """Public alias for stop() — stops current speech and clears queue."""
+        self.stop()
 
     def _worker(self):
         """
@@ -112,7 +120,12 @@ class VoiceManager:
         """
         Plays the audio file using pygame.
         """
+        if not os.path.exists(file_path) or os.path.getsize(file_path) < 100:
+            print(f"[Voice] Skipping playback: file invalid or too small — {file_path}")
+            return
         try:
+            if not pygame.mixer.get_init():
+                pygame.mixer.init()
             pygame.mixer.music.load(file_path)
             pygame.mixer.music.play()
             while pygame.mixer.music.get_busy():
@@ -124,11 +137,22 @@ class VoiceManager:
         except Exception as e:
             print(f"Playback Error: {e}")
         finally:
-            # Cleanup
             pass
-            # os.remove(file_path) # Optional: keep for debug or delete
 
     def shutdown(self):
         self.is_running = False
+        self.stop() # make sure audio stops
         self.queue.put(None)
-        pygame.mixer.quit()
+        
+        # Wait for worker thread to finish its loop before quitting Pygame
+        if hasattr(self, 'worker_thread') and self.worker_thread.is_alive():
+            try:
+                self.worker_thread.join(timeout=3.0)
+            except Exception:
+                pass
+                
+        try:
+            if pygame.mixer.get_init():
+                pygame.mixer.quit()
+        except Exception:
+            pass

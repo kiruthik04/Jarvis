@@ -13,8 +13,9 @@ class AutomationManager:
         """Starts the scheduler loop in a background thread."""
         if not self.running:
             self.running = True
-            threading.Thread(target=self._run_continuously, daemon=True).start()
-            print("Automation Scheduler Started.")
+            self.thread = threading.Thread(target=self._run_continuously, daemon=True)
+            self.thread.start()
+            print("  Automation Scheduler Started.")
 
     def _run_continuously(self):
         while self.running:
@@ -23,6 +24,12 @@ class AutomationManager:
 
     def stop(self):
         self.running = False
+        schedule.clear()
+        if hasattr(self, "thread") and self.thread.is_alive():
+            try:
+                self.thread.join(timeout=2.0)
+            except Exception:
+                pass
 
     def set_reminder(self, message, time_str):
         """

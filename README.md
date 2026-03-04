@@ -212,5 +212,5 @@ Jarvis/
 ---
 
 <div align="center">
-    <sub>Built with ❤️ by Kiruthik varshan</sub>
+    <sub>Built with ❤️ by Kiruthik varshan @ 2026</sub>
 </div>

@@ -68,8 +68,10 @@ class VoiceManager:
                 # Adjust Voice Params based on Emotion
                 self._apply_emotion(emotion)
                 
-                # Generate Audio File
-                output_file = "temp_speech.mp3"
+                # Generate Audio File with unique name to prevent PermissionError
+                import time
+                os.makedirs("assets", exist_ok=True)
+                output_file = f"assets/temp_speech_{int(time.time()*1000)}.mp3"
                 asyncio.run(self._generate_audio(text, output_file))
                 
                 # Play Audio
@@ -137,7 +139,11 @@ class VoiceManager:
         except Exception as e:
             print(f"Playback Error: {e}")
         finally:
-            pass
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception:
+                pass
 
     def shutdown(self):
         self.is_running = False

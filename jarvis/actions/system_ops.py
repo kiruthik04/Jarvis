@@ -145,8 +145,8 @@ class SystemOps:
         app_name = app_name.strip() # Don't lower yet, might be a file path
         print(f"Attempting to open app/file: '{app_name}'")
         
-        if not app_name:
-            return "No application name provided."
+        if not app_name or app_name == "<unknown>" or app_name.lower() == "unknown":
+            return "Please specify which application you would like to open."
 
         try:
             # 1. Try opening as a file or path directly using os.startfile (Windows only)

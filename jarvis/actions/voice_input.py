@@ -14,6 +14,10 @@ class VoiceInputListener:
         self.stop_listening_func = None
         self.paused = False
 
+        # Awake state for continuous listening
+        self.last_awake_time = 0
+        self.awake_timeout = 15  # seconds to wait for follow-up without wake word
+
         # Use Windows default input (Microsoft Sound Mapper).
         # This always routes to whatever mic the user set as default in
         # Windows Sound Settings — no device-index guessing needed.
@@ -84,9 +88,11 @@ class VoiceInputListener:
             text = recognizer.recognize_google(audio).lower()
             print(f"[VoiceInput] Heard: '{text}'", flush=True)
 
-            # Wake Word Detection
+            # Wake Word Detection & Continuous Listening
+            is_awake = (time.time() - self.last_awake_time) < self.awake_timeout
+
             if "jarvis" in text:
-                # Capture everything after "jarvis" optionally prefixed by hey/hello/hi
+                self.last_awake_time = time.time()  # Wake up & reset timer
                 pattern = r"(?:hey|hello|hi)?\s*jarvis\s*(.*)"
                 match = re.search(pattern, text)
                 if match:
@@ -95,12 +101,16 @@ class VoiceInputListener:
                         print(f"[VoiceInput] Command extracted: '{command}'", flush=True)
                         self.callback(command)
                     else:
-                        # Just "Jarvis" with no command — trigger greeting
-                        print("[VoiceInput] Wake word detected with no command. Triggering greeting.", flush=True)
+                        print("[VoiceInput] Wake word detected. Triggering greeting.", flush=True)
                         self.callback("hello")
+            elif is_awake and len(text.strip()) > 2:
+                # We are awake, accept this as a follow-up command
+                self.last_awake_time = time.time()  # Reset timer to stay awake
+                print(f"[VoiceInput] Follow-up command detected: '{text}'", flush=True)
+                self.callback(text.strip())
             else:
                 # Discard background chatter
-                print(f"[VoiceInput] Ignored (no wake word): '{text}'", flush=True)
+                print(f"[VoiceInput] Ignored (Asleep/No wake word): '{text}'", flush=True)
 
         except sr.UnknownValueError:
             print("[VoiceInput] Could not understand audio.", flush=True)
